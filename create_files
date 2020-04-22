@@ -1,0 +1,6 @@
+#!/bin/bash
+
+touch ./python2/exercise20/ex20_file.txt ./python3/exercise20/ex20_file.txt |\
+echo -e "This is stuff I typed into a file. \nIt is really cool stuff. \nLots and lots of fun stuff to have here." |\
+tee -a python2/exercise20/ex20_file.txt python3/exercise20/ex20_file.txt
+
