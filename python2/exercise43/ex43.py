@@ -2,33 +2,43 @@
 
 from sys import exit
 from random import randint
+import random
 
-class Scene (object):
+class Scene(object):
 
     def enter(self):
-        print "This scene is not yet configired. Subclass it and implement enter()."
+        print "This scene is not yet configured. Subclass it and implement enter()."
         exit(1)
 
 
 class Engine(object):
+
     def __init__(self, scene_map):
+        print "Engine __init__ has scene_map:", scene_map
         self.scene_map = scene_map
 
     def play(self):
         current_scene = self.scene_map.opening_scene()
 
-    while True:
-        print "\n--------"
-        next_scene_name = current_scene.enter()
-        current_scene = self.scene_map.next_scene(next_scene_name)
+        while True:
+			print "\n--------"
+			next_scene_name = current_scene.enter()
+			current_scene = self.scene_map.next_scene(next_scene_name)
+
+
+class Finish(Scene):
+
+    def enter(self):
+        print "Game complete."
+        exit(1)
 
 
 class Death(Scene):
 
     quips = [
         "You're dead!\nGame Over Yeah!!!!",
-        "oh well. I guess your just not good."
-        "Here is some advice. :). smile."
+        "oh well. I guess your just not good.",
+        "Here is some advice.\n:)\nsmile.",
         "Don't be bad. Get Good!"
     ]
 
@@ -97,7 +107,7 @@ class CentralCorridor(Scene):
             return 'central_corridor'
 
 
-class LaserWeaponArmory(scene):
+class LaserWeaponArmory(Scene):
 
     def enter(self):
         print "you pie into the weapons armory and then dive roll behind the a"
@@ -105,7 +115,7 @@ class LaserWeaponArmory(scene):
         print "hiding. It is eerily quiet, but you see the neutron bomb in the"
         print "far corner of the room in its box. You stand up and make a dash"
         print "to the box. You get to the box and see a 3 digit key pad lock on"
-        print "the box. You have 10 tries to guess the code. After try 10, it is"
+        print "the box. You have 10 tries to guess the code. After try 20, it is"
         print "locked forever\n"
         print "You can either enter a code or search box for a clue"
         print "what will you do?"
@@ -117,10 +127,21 @@ class LaserWeaponArmory(scene):
         guess = action
         guesses = 0
 
-        while guess != code and guesses < 10:
+        while guess != code and guesses < 20:
             if action == "search":
                 print "You search the box and see some marker writing on the side."
                 print "It says 'each digit is between 1 and 3"
+                print "\ntype 'search' or enter 3 digits\n"
+
+                action = raw_input("> ")
+                guess = action
+
+            elif (guess == code) or (guess == "444"):
+        	    print "The box clicks and you see white gas stream out as it slowly opens."
+        	    print "You grab the bomb and run quickly to the door to the bridge where,"
+        	    print "you must place it."
+        	    return 'the_bridge'
+
             else:
                 print "You typed on the keypad"
                 print "[keypad]>%s" % guess
@@ -132,23 +153,18 @@ class LaserWeaponArmory(scene):
                 action = raw_input("> ")
                 guess = action
 
-        if (guess == code) or (guess == "444"):
-            print "The box clicks and you see white gas stream out as it slowly opens."
-            print "You grab the bomb and run quickly to the door to the bridge where,"
-            print "you must place it."
-            return 'the_bridge'
-        else:
-            print "The box buzzes one last time, and you turn sick to your stomach as"
-            print "hear the sound you only heard during training at the academy."
-            print "THE BOX IS FUSING SHUT FOREVER."
-            print "You sit on the ground stunned awaiting death!"
-            print "The Gothon ship fires at your ship. You die in the explosion!"
+        print "The box buzzes one last time, and you turn sick to your stomach as"
+        print "hear the sound you only heard during training at the academy."
+        print "Then you remember the code was %s" % code
+        print "THE BOX IS FUSING SHUT FOREVER."
+        print "You sit on the ground stunned awaiting death!"
+        print "The Gothon ship fires at your ship. You die in the explosion!"
         
-            return 'death'
+        return 'death'
 
 
 
-class TheBridge(scene):
+class TheBridge(Scene):
 
     def enter(self):
         print "You make your way through the halls of the ship towards the"
@@ -191,7 +207,7 @@ class TheBridge(scene):
             return 'the_bridge'
 
 
-class EscapePod(scene):
+class EscapePod(Scene):
 
     def enter(self):
         print "You run frantically around the ship, and there are hardly any"
@@ -203,11 +219,16 @@ class EscapePod(scene):
         print "and pull the release switch."
         print "Which one did you choose?\n"
 
-        good_pod = randint(1,5)
+		# 3 out of 5 pods are good
+        good_pods = random.sample(range(1,5), 3)
 
-        guess = raw_input("POD-> ")
+        try:
+            guess = int(raw_input("POD-> "))
+        except ValueError:
+            print "DID NOT COMPUTE!"
+            return 'escape_pod'
 
-        if guess == good_pod:
+        if guess in good_pods:
             print "Soon after getting into pod %s, it launches smoothly into" % guess
             print "space towards the nearby planet below. As you you get close"
             print "to the planet, you look back at your ship as it implodes and"
@@ -218,8 +239,8 @@ class EscapePod(scene):
 
             return 'finish'
 
-        elif guess != good_pod:
-            print "Soon after getting into pod %s, it launches into the void"
+        elif (guess not in good_pods) and (guess in range(1,5)):
+            print "Soon after getting into pod %s, it launches into the void" % guess
             print "of space. Sunddenly the pod starts to violently shake, as"
             print "the hole that was in its get wider. The pod implodes, and"
             print "crushes you into a thick paste. You died!!"
@@ -227,7 +248,7 @@ class EscapePod(scene):
             return 'death'
 
         else:
-            print "DID NOT COMPUTE!"
+            print "Excape pod %s is not available." % guess
             return 'escape_pod'
 
 
@@ -238,7 +259,8 @@ class Map(object):
         'laser_weapon_armory': LaserWeaponArmory(),
         'the_bridge': TheBridge(),
         'escape_pod': EscapePod(),
-        'death': Death()
+        'death': Death(),
+        'finish': Finish()
     }
 
     def __init__(self, start_scene):
